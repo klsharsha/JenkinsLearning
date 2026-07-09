@@ -4,9 +4,7 @@ agent any
 
 
 tools {
-
-nodejs "NodeJS-25"
-
+    nodejs "NodeJS-25"
 }
 
 
@@ -41,7 +39,7 @@ stage("Build Docker Image") {
 
 steps {
 
-bat "docker build -t jenkins-express-demo ."
+bat "docker build -t klsharsha/jenkins-express-demo ."
 
 }
 
@@ -49,11 +47,27 @@ bat "docker build -t jenkins-express-demo ."
 
 
 
-stage("Check Docker Image") {
+stage("Push Docker Image") {
 
 steps {
 
-bat "docker images"
+withCredentials([
+usernamePassword(
+credentialsId:'dockerhub',
+usernameVariable:'DOCKER_USER',
+passwordVariable:'DOCKER_PASS'
+)
+]) {
+
+bat """
+
+docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+
+docker push klsharsha/jenkins-express-demo
+
+"""
+
+}
 
 }
 
