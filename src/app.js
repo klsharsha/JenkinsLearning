@@ -29,7 +29,7 @@ app.get("/users",(req,res)=>{
         {
             id:1,
             name:"Harsha"
-        },
+        
         {
             id:2,
             name:"DevOps"
