@@ -23,6 +23,15 @@ app.get("/health",(req,res)=>{
 });
 
 
+app.get("/version",(req,res)=>{
+
+    res.json({
+        app:"Jenkins CI/CD Demo",
+        version:"2.0",
+        deployedBy:"Jenkins + Docker + AWS EC2"
+    });
+
+});
 app.get("/users",(req,res)=>{
 
     res.json([

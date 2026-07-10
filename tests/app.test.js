@@ -25,6 +25,25 @@ describe("Express API Tests",()=>{
 
     });
 
+    test("GET /version should return deployment details", async()=>{
+
+        const response = await request(app)
+            .get("/version");
+
+
+        expect(response.statusCode)
+            .toBe(200);
+
+
+        expect(response.body.version)
+            .toBe("2.0");
+
+
+        expect(response.body.deployedBy)
+            .toBe("Jenkins + Docker + AWS EC2");
+
+    });
+
 
 
     test("GET /health should return UP",async ()=>{
