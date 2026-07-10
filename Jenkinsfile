@@ -1,112 +1,148 @@
 pipeline {
 
-agent any
+    agent any
 
 
-tools {
-    nodejs "NodeJS-25"
-}
+    tools {
+        nodejs "NodeJS-25"
+    }
 
 
-stages {
+    stages {
 
 
-stage("Install Dependencies") {
+        stage("Install Dependencies") {
 
-steps {
+            steps {
 
-bat "npm install"
+                bat "npm install"
 
-}
+            }
 
-}
-
-
-stage("Run Tests") {
-
-steps {
-
-bat "npm test"
-
-}
-
-}
+        }
 
 
 
-stage("Build Docker Image") {
+        stage("Run Tests") {
 
-steps {
+            steps {
 
-bat "docker build -t klsharsha/jenkins-express-demo ."
+                bat "npm test"
 
-}
+            }
 
-}
-
-
-
-stage("Push Docker Image") {
-
-steps {
-
-
-withCredentials([
-usernamePassword(
-credentialsId:'dockerhub',
-usernameVariable:'DOCKER_USER',
-passwordVariable:'DOCKER_PASS'
-)
-]) {
-
-
-bat """
-
-docker login -u %DOCKER_USER% -p %DOCKER_PASS%
-
-docker push klsharsha/jenkins-express-demo
-
-"""
-
-
-}
-
-
-}
-
-}
+        }
 
 
 
+        stage("Build Docker Image") {
 
-stage("Deploy To EC2") {
+            steps {
 
+                bat "docker build -t klsharsha/jenkins-express-demo ."
 
-steps {
+            }
 
-
-sshagent(['ec2-key']) {
-
-
-bat """
-
-ssh -o StrictHostKeyChecking=no ec2-user@16.171.15.12 "docker pull klsharsha/jenkins-express-demo && docker stop express-app || true && docker rm express-app || true && docker run -d --name express-app -p 3000:3000 klsharsha/jenkins-express-demo"
-
-
-"""
-
-
-}
-
-
-}
-
-
-}
+        }
 
 
 
-}
+        stage("Push Docker Image") {
+
+            steps {
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+
+
+                    bat """
+
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+
+                    docker push klsharsha/jenkins-express-demo
+
+                    """
+
+                }
+
+            }
+
+        }
+
+
+
+        stage("Deploy To EC2") {
+
+
+            steps {
+
+
+                script {
+
+
+                    def remote = [:]
+
+                    remote.name = "AWS EC2 Server"
+
+                    remote.host = "16.171.15.12"
+
+                    remote.user = "ec2-user"
+
+                    remote.allowAnyHosts = true
+
+
+
+                    withCredentials([
+
+                        sshUserPrivateKey(
+
+                            credentialsId: 'ec2-key',
+
+                            keyFileVariable: 'PRIVATE_KEY'
+
+                        )
+
+                    ]) {
+
+
+                        remote.identityFile = PRIVATE_KEY
+
+
+
+                        sshCommand remote: remote, command: """
+
+                        docker pull klsharsha/jenkins-express-demo
+
+
+                        docker stop express-app || true
+
+
+                        docker rm express-app || true
+
+
+                        docker run -d --name express-app -p 3000:3000 klsharsha/jenkins-express-demo
+
+                        """
+
+
+                    }
+
+
+                }
+
+
+            }
+
+
+        }
+
+
+    }
 
 
 }
